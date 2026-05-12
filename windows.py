@@ -1,0 +1,23 @@
+from PyQt6.QtWidgets import QDialog
+from PyQt6 import uic
+
+class CreateTaskWindow(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        uic.loadUi("UI/create.ui", self)
+        self.btnSave.clicked.connect(self.accept)
+        self.btnCancel.clicked.connect(self.reject)
+
+class ViewTaskWindow(QDialog):
+    def __init__(self, task_name, parent=None):
+        super().__init__(parent)
+        uic.loadUi("UI/view.ui", self)
+        self.setWindowTitle(task_name)
+        
+
+class EditTaskWindow(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        uic.loadUi("UI/edit.ui", self)
+        self.btnSave.clicked.connect(self.accept)
+        self.btnCancel.clicked.connect(self.reject)
