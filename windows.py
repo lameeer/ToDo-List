@@ -9,10 +9,17 @@ class CreateTaskWindow(QDialog):
         self.btnCancel.clicked.connect(self.reject)
 
 class ViewTaskWindow(QDialog):
-    def __init__(self, task_name, parent=None):
+    def __init__(self, task_data, parent=None):
         super().__init__(parent)
         uic.loadUi("UI/view.ui", self)
-        self.setWindowTitle(task_name)
+        
+        title = task_data.get("title", "Задача")
+        self.setWindowTitle(title)
+        self.lblTaskName.setText(title)
+        
+        self.lblDesc.setText(task_data.get("description", ""))
+        self.lblPriority.setText(f"Приоритет: {task_data.get('priority', '')}")
+        self.lblDate.setText(f"Дата: {task_data.get('date', '')}")
         
 
 class EditTaskWindow(QDialog):
