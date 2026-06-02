@@ -26,10 +26,14 @@ class MainWindow(QMainWindow):
     def save_all_tasks(self):
         storage.save_tasks(self.tasks)
 
+        self.update_statistics()
+
     def refresh_list(self):
         self.listTasks.clear()
         for task_data in self.tasks:
             self.add_task_to_list(task_data)
+        
+        self.update_statistics()
 
     def add_task_to_list(self, task_data):
         item = QListWidgetItem()
@@ -90,6 +94,17 @@ class MainWindow(QMainWindow):
         if widget:
             dialog = ViewTaskWindow(widget.task_data, self)
             dialog.exec()
+
+    def update_statistics(self):
+        total = len(self.tasks)
+        completed = sum(1 for task in self.tasks if task.get("completed", False))
+        active = total - completed
+
+        self.lblTotal.setText(f"Всего: {total}")
+        self.lblActive.setText(f"Активных: {active}")
+        self.lblCompleted.setText(f"Завершено: {completed}")
+
+   
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

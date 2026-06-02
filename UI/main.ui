@@ -16,6 +16,7 @@
   <property name="styleSheet">
    <string notr="true">QMainWindow { background-color: white; }
 QLabel { color: black; }
+QLabel#lblTotal, QLabel#lblActive, QLabel#lblCompleted { color: #6c5ce7; font-weight: bold; font-size: 13px; }
 QLineEdit { background-color: #d9d9d9; color: black; border: 1px solid #a0a0a0; padding: 6px; border-radius: 4px; }
 QListWidget { background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 5px; }
 QListWidget::item { background-color: #c0c0c0; border-radius: 15px; margin: 5px 10px; padding: 10px; height: 50px; color: black; }
@@ -50,6 +51,41 @@ QPushButton:hover { background-color: #a29bfe; }</string>
        <string>Поиск задач...</string>
       </property>
      </widget>
+    </item>
+    
+    <item>
+     <layout class="QHBoxLayout" name="statsLayout">
+      <item>
+       <widget class="QLabel" name="lblTotal">
+        <property name="text">
+         <string>Всего: 0</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="lblActive">
+        <property name="text">
+         <string>Активных: 0</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="lblCompleted">
+        <property name="text">
+         <string>Завершено: 0</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
     <item>
      <widget class="QPushButton" name="btnAdd">
