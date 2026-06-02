@@ -1,11 +1,41 @@
-from PyQt6.QtWidgets import QDialog
+from PyQt6.QtWidgets import QDialog, QMessageBox
+from PyQt6.QtCore import QDate
 from PyQt6 import uic
 
-class CreateTaskWindow(QDialog):
+class BaseTaskWindow(QDialog):
+    def validate_and_save(self):
+        title = self.titleEdit.text().strip()
+        desc = self.descEdit.toPlainText().strip()
+
+        if not title:
+            QMessageBox.warning(self, "Ошибка", "Название задачи не может быть пустым!")
+            return
+            
+        if len(title) > 50:
+            QMessageBox.warning(self, "Ошибка", "Название слишком длинное! (Максимум 50 символов)")
+            return
+            
+        if len(desc) > 500:
+            QMessageBox.warning(self, "Ошибка", "Описание слишком длинное! (Максимум 500 символов)")
+            return
+
+        self.accept()
+
+class CreateTaskWindow(BaseTaskWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         uic.loadUi("UI/create.ui", self)
-        self.btnSave.clicked.connect(self.accept)
+        
+        self.btnSave.clicked.connect(self.validate_and_save) 
+        self.btnCancel.clicked.connect(self.reject)
+        self.dateEdit.setDate(QDate.currentDate())
+
+class EditTaskWindow(BaseTaskWindow):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        uic.loadUi("UI/edit.ui", self)
+        
+        self.btnSave.clicked.connect(self.validate_and_save) 
         self.btnCancel.clicked.connect(self.reject)
 
 class ViewTaskWindow(QDialog):
@@ -22,9 +52,3 @@ class ViewTaskWindow(QDialog):
         self.lblDate.setText(f"Дата: {task_data.get('date', '')}")
         
 
-class EditTaskWindow(QDialog):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        uic.loadUi("UI/edit.ui", self)
-        self.btnSave.clicked.connect(self.accept)
-        self.btnCancel.clicked.connect(self.reject)
