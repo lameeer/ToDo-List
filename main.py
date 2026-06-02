@@ -15,6 +15,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         uic.loadUi("UI/main.ui", self)
+
+        self.setMinimumSize(400, 600)
         
         self.tasks = storage.load_tasks()
         self.btnAdd.clicked.connect(self.open_create)
