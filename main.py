@@ -1,7 +1,5 @@
 import sys
-from PyQt6.QtWidgets import (QApplication, QMainWindow, QDialog, 
-                             QListWidgetItem, QWidget, QHBoxLayout, 
-                             QLabel, QPushButton, QCheckBox)
+from PyQt6.QtWidgets import QApplication, QMainWindow, QListWidgetItem, QMenu
 from PyQt6.QtCore import QDate, QSize
 from PyQt6 import uic
 
@@ -9,6 +7,7 @@ from windows import CreateTaskWindow, ViewTaskWindow, EditTaskWindow
 from widgets import TaskWidget
 import storage
 
+PRIORITY_ORDER = {"Высокий": 0, "Средний": 1, "Низкий": 2}
 
 
 class MainWindow(QMainWindow):
@@ -17,40 +16,69 @@ class MainWindow(QMainWindow):
         uic.loadUi("UI/main.ui", self)
 
         self.setMinimumSize(400, 600)
-        
+
         self.tasks = storage.load_tasks()
         self.btnAdd.clicked.connect(self.open_create)
         self.listTasks.itemDoubleClicked.connect(self.open_view)
         self.searchEdit.textChanged.connect(self.filter_tasks)
+        self._setup_sort_menu()
 
         self.refresh_list()
 
+    def _setup_sort_menu(self):
+        menu = QMenu(self)
+        menu.addAction("По названию", lambda: self.sort_tasks("title"))
+        menu.addAction("По дате", lambda: self.sort_tasks("date"))
+        menu.addAction("По приоритету", lambda: self.sort_tasks("priority"))
+        self.btnSort.setMenu(menu)
+
     def save_all_tasks(self):
         storage.save_tasks(self.tasks)
-
         self.update_statistics()
 
     def refresh_list(self):
         self.listTasks.clear()
         for task_data in self.tasks:
             self.add_task_to_list(task_data)
-        
         self.update_statistics()
+        self.filter_tasks(self.searchEdit.text())
 
     def add_task_to_list(self, task_data):
         item = QListWidgetItem()
-        item.setSizeHint(QSize(0, 65))
+        item.setSizeHint(QSize(0, 72))
         self.listTasks.addItem(item)
-        
+
         task_widget = TaskWidget(task_data, self.listTasks, item, self)
         self.listTasks.setItemWidget(item, task_widget)
 
     def filter_tasks(self, text):
+        query = text.lower()
         for i in range(self.listTasks.count()):
             item = self.listTasks.item(i)
             widget = self.listTasks.itemWidget(item)
             if widget:
-                item.setHidden(text.lower() not in widget.lbl_title.text().lower())
+                item.setHidden(query not in widget.lbl_title.text().lower())
+
+    def sort_tasks(self, key):
+        if key == "title":
+            self.tasks.sort(key=lambda t: t.get("title", "").lower())
+        elif key == "date":
+            self.tasks.sort(key=self._date_sort_key)
+        elif key == "priority":
+            self.tasks.sort(
+                key=lambda t: PRIORITY_ORDER.get(t.get("priority", "Низкий"), 99)
+            )
+
+        self.save_all_tasks()
+        self.refresh_list()
+
+    @staticmethod
+    def _date_sort_key(task):
+        date_str = task.get("date", "")
+        date = QDate.fromString(date_str, "dd.MM.yyyy")
+        if date.isValid():
+            return date.toJulianDay()
+        return 0
 
     def open_create(self):
         dialog = CreateTaskWindow(self)
@@ -62,7 +90,7 @@ class MainWindow(QMainWindow):
                     "description": dialog.descEdit.toPlainText(),
                     "priority": dialog.priorityCombo.currentText(),
                     "date": dialog.dateEdit.date().toString("dd.MM.yyyy"),
-                    "completed": False
+                    "completed": False,
                 }
                 self.tasks.append(new_task)
                 self.save_all_tasks()
@@ -71,11 +99,11 @@ class MainWindow(QMainWindow):
     def open_edit(self, task_widget):
         dialog = EditTaskWindow(self)
         task_data = task_widget.task_data
-        
+
         dialog.titleEdit.setText(task_data.get("title", ""))
         dialog.descEdit.setText(task_data.get("description", ""))
         dialog.priorityCombo.setCurrentText(task_data.get("priority", "Низкий"))
-        
+
         date_str = task_data.get("date", "")
         if date_str:
             dialog.dateEdit.setDate(QDate.fromString(date_str, "dd.MM.yyyy"))
@@ -87,9 +115,9 @@ class MainWindow(QMainWindow):
                 task_data["description"] = dialog.descEdit.toPlainText()
                 task_data["priority"] = dialog.priorityCombo.currentText()
                 task_data["date"] = dialog.dateEdit.date().toString("dd.MM.yyyy")
-                
+
                 self.save_all_tasks()
-                task_widget.lbl_title.setText(new_title)
+                task_widget.refresh_display()
 
     def open_view(self, item):
         widget = self.listTasks.itemWidget(item)
@@ -106,7 +134,6 @@ class MainWindow(QMainWindow):
         self.lblActive.setText(f"Активных: {active}")
         self.lblCompleted.setText(f"Завершено: {completed}")
 
-   
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

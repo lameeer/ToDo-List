@@ -2,6 +2,8 @@ from PyQt6.QtWidgets import QDialog, QMessageBox
 from PyQt6.QtCore import QDate
 from PyQt6 import uic
 
+
+
 class BaseTaskWindow(QDialog):
     def validate_and_save(self):
         title = self.titleEdit.text().strip()
