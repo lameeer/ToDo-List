@@ -3,6 +3,8 @@ from PyQt6.QtWidgets import (
     QLabel, QPushButton, QMessageBox
 )
 
+from deadline import COLOR_COMPLETED, format_date_with_deadline
+
 PRIORITY_COLORS = {
     "Высокий": "#e74c3c",
     "Средний": "#f39c12",
@@ -76,7 +78,6 @@ class TaskWidget(QWidget):
     def refresh_display(self):
         self.lbl_title.setText(self.task_data.get("title", ""))
         date = self.task_data.get("date", "")
-        self.lbl_date.setText(date if date else "")
         self.lbl_date.setVisible(bool(date))
 
         priority = self.task_data.get("priority", "Низкий")
@@ -88,26 +89,33 @@ class TaskWidget(QWidget):
         self.update_text_style()
 
     def update_text_style(self):
-        if self.checkbox.isChecked():
+        completed = self.checkbox.isChecked()
+        date = self.task_data.get("date", "")
+
+        if completed:
             self.lbl_title.setStyleSheet(
                 "text-decoration: line-through; color: #7f8c8d; "
                 "background: transparent; padding: 0px;"
-            )
-            self.lbl_date.setStyleSheet(
-                "color: #b0b0b0; font-size: 11px; background: transparent; padding: 0px;"
             )
         else:
             self.lbl_title.setStyleSheet(
                 "color: black; font-weight: bold; background: transparent; padding: 0px;"
             )
+
+        if date:
+            date_text, date_color = format_date_with_deadline(date, completed)
+            if completed:
+                date_color = COLOR_COMPLETED
+            self.lbl_date.setText(date_text)
             self.lbl_date.setStyleSheet(
-                "color: #7f8c8d; font-size: 11px; background: transparent; padding: 0px;"
+                f"color: {date_color}; font-size: 11px; background: transparent; padding: 0px;"
             )
 
     def toggle_completed(self, state):
         self.task_data["completed"] = self.checkbox.isChecked()
         self.update_text_style()
         self.main_window.save_all_tasks()
+        self.main_window.apply_filters()
 
     def delete_task(self):
         title = self.task_data.get("title", "эту задачу")

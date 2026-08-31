@@ -72,7 +72,7 @@ QPushButton:hover { background-color: #a29bfe; }</string>
          </size>
         </property>
         <property name="toolTip">
-         <string>Сортировка задач</string>
+         <string>Фильтр задач</string>
         </property>
         <property name="text">
          <string>⇅</string>

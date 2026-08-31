@@ -7,8 +7,6 @@ from windows import CreateTaskWindow, ViewTaskWindow, EditTaskWindow
 from widgets import TaskWidget
 import storage
 
-PRIORITY_ORDER = {"Высокий": 0, "Средний": 1, "Низкий": 2}
-
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -18,18 +16,19 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(400, 600)
 
         self.tasks = storage.load_tasks()
+        self.completion_filter = "all"
         self.btnAdd.clicked.connect(self.open_create)
         self.listTasks.itemDoubleClicked.connect(self.open_view)
-        self.searchEdit.textChanged.connect(self.filter_tasks)
-        self._setup_sort_menu()
+        self.searchEdit.textChanged.connect(self.apply_filters)
+        self._setup_filter_menu()
 
         self.refresh_list()
 
-    def _setup_sort_menu(self):
+    def _setup_filter_menu(self):
         menu = QMenu(self)
-        menu.addAction("По названию", lambda: self.sort_tasks("title"))
-        menu.addAction("По дате", lambda: self.sort_tasks("date"))
-        menu.addAction("По приоритету", lambda: self.sort_tasks("priority"))
+        menu.addAction("Все задачи", lambda: self.set_completion_filter("all"))
+        menu.addAction("Активные", lambda: self.set_completion_filter("active"))
+        menu.addAction("Завершённые", lambda: self.set_completion_filter("completed"))
         self.btnSort.setMenu(menu)
 
     def save_all_tasks(self):
@@ -41,7 +40,7 @@ class MainWindow(QMainWindow):
         for task_data in self.tasks:
             self.add_task_to_list(task_data)
         self.update_statistics()
-        self.filter_tasks(self.searchEdit.text())
+        self.apply_filters()
 
     def add_task_to_list(self, task_data):
         item = QListWidgetItem()
@@ -51,34 +50,29 @@ class MainWindow(QMainWindow):
         task_widget = TaskWidget(task_data, self.listTasks, item, self)
         self.listTasks.setItemWidget(item, task_widget)
 
-    def filter_tasks(self, text):
-        query = text.lower()
+    def set_completion_filter(self, filter_type):
+        self.completion_filter = filter_type
+        self.apply_filters()
+
+    def apply_filters(self, _text=None):
+        query = self.searchEdit.text().lower()
         for i in range(self.listTasks.count()):
             item = self.listTasks.item(i)
             widget = self.listTasks.itemWidget(item)
-            if widget:
-                item.setHidden(query not in widget.lbl_title.text().lower())
+            if not widget:
+                continue
 
-    def sort_tasks(self, key):
-        if key == "title":
-            self.tasks.sort(key=lambda t: t.get("title", "").lower())
-        elif key == "date":
-            self.tasks.sort(key=self._date_sort_key)
-        elif key == "priority":
-            self.tasks.sort(
-                key=lambda t: PRIORITY_ORDER.get(t.get("priority", "Низкий"), 99)
-            )
+            matches_search = query in widget.lbl_title.text().lower()
+            completed = widget.task_data.get("completed", False)
 
-        self.save_all_tasks()
-        self.refresh_list()
+            if self.completion_filter == "active":
+                matches_completion = not completed
+            elif self.completion_filter == "completed":
+                matches_completion = completed
+            else:
+                matches_completion = True
 
-    @staticmethod
-    def _date_sort_key(task):
-        date_str = task.get("date", "")
-        date = QDate.fromString(date_str, "dd.MM.yyyy")
-        if date.isValid():
-            return date.toJulianDay()
-        return 0
+            item.setHidden(not (matches_search and matches_completion))
 
     def open_create(self):
         dialog = CreateTaskWindow(self)
@@ -95,6 +89,7 @@ class MainWindow(QMainWindow):
                 self.tasks.append(new_task)
                 self.save_all_tasks()
                 self.add_task_to_list(new_task)
+                self.apply_filters()
 
     def open_edit(self, task_widget):
         dialog = EditTaskWindow(self)

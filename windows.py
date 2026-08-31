@@ -2,6 +2,8 @@ from PyQt6.QtWidgets import QDialog, QMessageBox
 from PyQt6.QtCore import QDate
 from PyQt6 import uic
 
+from deadline import format_date_with_deadline
+
 
 
 class BaseTaskWindow(QDialog):
@@ -51,6 +53,18 @@ class ViewTaskWindow(QDialog):
         
         self.lblDesc.setText(task_data.get("description", ""))
         self.lblPriority.setText(f"Приоритет: {task_data.get('priority', '')}")
-        self.lblDate.setText(f"Дата: {task_data.get('date', '')}")
+
+        date_str = task_data.get("date", "")
+        completed = task_data.get("completed", False)
+        if date_str:
+            date_text, date_color = format_date_with_deadline(date_str, completed)
+            self.lblDate.setText(f"Дата: {date_text}")
+            self.lblDate.setStyleSheet(
+                f"color: {date_color}; font-weight: bold; font-size: 14px;"
+            )
+            self.lblDate.setVisible(True)
+        else:
+            self.lblDate.clear()
+            self.lblDate.setVisible(False)
         
 
